@@ -1,44 +1,57 @@
 from fastapi import FastAPI, Body
-from app.db import Todo, session
+from app.db import Todos,engine
+from sqlmodel import Session, select
+
+
 
 app:FastAPI = FastAPI()
 
 
 @app.get("/")
 async def get_all_todos():
-    todos_query = session.query(Todo)
-    return todos_query.all()
+    with Session(engine) as session:
+        statement = select(Todos)
+        results = session.exec(statement)
+        todos = results.all()
+        return todos
 
 @app.get("/done")
 async def list_done_todos():
-    todos_query = session.query(Todo)
-    done_todos_query = todos_query.filter(Todo.is_done==True)
-    return done_todos_query.all()
+    with Session(engine) as session:
+        statement = select(Todos).where(Todos.is_done == True)
+        results = session.exec(statement)
+        todos = results.all()
+        return todos
 
 @app.post("/create")
 async def create_todo(text: str  = Body(embed=True), is_complete: bool = False):
-    todo = Todo(text=text, is_done=is_complete)
-    session.add(todo)
-    print(session.add(todo))
-    session.commit()
-    return {"todo added": todo.text}
-
+    with Session(engine) as session:
+        todo = Todos(text=text, is_done=is_complete)
+        session.add(todo)
+        session.commit()
+        return {"todo created": todo.text}
      
 @app.put("/update/{id}")
 async def update_todo(
     id: int,
     text: str = Body(embed=True),
 ):
-    todo_query = session.query(Todo).filter(Todo.id==id)
-    todo = todo_query.first()
-    if text:
-        todo.text = text
-    session.add(todo)
-    session.commit()
+    with Session(engine) as session:
+        todo_query = select(Todos).where(Todos.id == id)
+        results = session.exec(todo_query)
+        todo = results.one()
+        if todo:
+            todo.text = text
+        session.add(todo)
+        session.commit()
+        return {"todo updated": todo.text}
 
 @app.delete("/delete/{id}")
 async def delete_todo(id: int):
-    todo = session.query(Todo).filter(Todo.id==id).first() # Todo object
-    session.delete(todo)
-    session.commit()
-    return {"todo deleted": todo.text}
+    with Session(engine) as session:
+        todo_query = select(Todos).where(Todos.id == id)
+        results = session.exec(todo_query)
+        todo = results.one()
+        session.delete(todo)
+        session.commit()
+        return {"todo deleted": todo.text}
