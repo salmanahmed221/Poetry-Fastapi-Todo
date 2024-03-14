@@ -1,1 +1,1 @@
-Simple Fastapi Todo with poetry
+Simple Fastapi Todo with poetry and Frontend with Streamlit

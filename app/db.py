@@ -1,7 +1,11 @@
 from sqlmodel import Field, SQLModel, create_engine
 from typing import Optional
+from dotenv import load_dotenv, find_dotenv
+from os import getenv
 
 
+_:bool = load_dotenv(find_dotenv())
+postgress_url:str = getenv("POSTGRESS_URL")
 
 class Todos(SQLModel, table=True):
     id:int = Field(primary_key=True)
@@ -10,7 +14,7 @@ class Todos(SQLModel, table=True):
 
 
 engine = create_engine(
-f'postgresql://salmanahmed121221:YDeWwV7EH3gm@ep-blue-cake-56162237.us-east-2.aws.neon.tech/neondb?sslmode=require',
+ postgress_url,
     echo= True
 )
 
